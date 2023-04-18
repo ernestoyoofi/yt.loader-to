@@ -6,7 +6,7 @@
   },
   "name": "@ernestoyoofi/yt.loader-to",
   "description": "Simple api youtube downloader is not official from en.loader.to",
-  "version": "1.5.0",
+  "version": "1.5.0-release",
   "main": "main.js",
   "directories": {
     "lib": "lib"
