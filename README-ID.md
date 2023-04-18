@@ -6,7 +6,7 @@ Youtube Downloading api sederhana tidak resmi dari en.loader.to.
 
 Node.js sederhana mengunduh video atau audio dari youtube.
 
-## 📂 Pemasaangan
+## 📂 Pemasangan
 
 Anda dapat mengunduh dengan npm atau yarn.
 
@@ -18,7 +18,7 @@ npm i @ernestoyoofi/yt.loader-to --save
 yarn add @ernestoyoofi/yt.loader-to
 ```
 
-## ✍️ Usage
+## ✍️ Penggunaan
 
 ```js
 const yt = require("@ernestoyoofi/yt.loader-to")
