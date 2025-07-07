@@ -1,19 +1,19 @@
 {
-  "dependencies": {
-    "axios": "^1.3.5",
-    "cheerio": "^1.0.0-rc.12",
-    "url": "^0.11.0"
-  },
   "name": "@ernestoyoofi/yt.loader-to",
-  "description": "Simple api youtube downloader is not official from en.loader.to",
-  "version": "1.5.0-release",
-  "main": "main.js",
+  "description": "An unofficial, promise-based API wrapper for `loader.to` to fetch YouTube video information and generate download links. Written in TypeScript, it's fully typed and easy to use in any Node.js project.",
+  "version": "1.7.0",
+  "main": "./dist/main.js",
   "directories": {
     "lib": "lib"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "rimraf": "^6.0.1"
+  },
   "scripts": {
-    "test": "node test"
+    "clean": "rimraf dist",
+    "watch": "npm run clean && tsc --watch",
+    "build": "tsc && cp README.md package.json dist/",
+    "build-win": "tsc && copy README.md dist\\ && copy package.json dist\\"
   },
   "repository": {
     "type": "git",
@@ -26,6 +26,11 @@
     "axios",
     "scrapper"
   ],
+  "dependencies": {
+    "axios": "^1.10.0",
+    "cheerio": "^1.1.0",
+    "url": "^0.11.4"
+  },
   "author": "Ernestoyoofi",
   "license": "MIT",
   "bugs": {
