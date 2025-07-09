@@ -1,8 +1,39 @@
-const APIDownload = require("./dist/lib/main").default
+const APIDownload = require("./dist/lib/main")
+
+APIDownload.default.DownloadMedia({
+  debugging: true,
+  link: "https://www.youtube.com/shorts/dQw4w9WgXcQ"
+}).then(console.log)
+
+// console.log(APIDownload({
+//   download: "/api/path/download",
+//   info: "/api/path/info"
+// })("download"))
+// console.log(APIDownload({
+//   download: "/api/path/download",
+//   info: "/api/path/info"
+// })("info"))
+// console.log(APIDownload({
+//   download: "/api/path/download",
+//   info: "/api/path/info"
+// })("download", "googe.com"))
+// console.log(APIDownload({
+//   download: "/api/path/download",
+//   info: "/api/path/info"
+// })("info", "googe.com"))
+
+// console.log(APIDownload("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+// console.log(APIDownload("https://www.youtube.com/shorts/zGS-wL4fMag"))
+// console.log(APIDownload("https://www.youtube.com/live/dQw4w9WgXcQ"))
+// console.log(APIDownload("https://youtu.be/ULp8GYfDHY4?si=Gf8K2X-0dyvZ2xje"))
+
 // APIDownload.GetInfoYoutubeContent("https://www.youtube.com/watch?v=dQw4w9WgXcQ").then(a => console.log(a))
-APIDownload.DownloadMedia({
-  link: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-}).then(a => console.log(a))
+// APIDownload.DownloadMedia({
+//   link: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+// }).then(a => console.log(a))
+// APIDownload.DownloadMedia({
+//   link: "https://www.youtube.com/shorts/zGS-wL4fMag",
+// }).then(a => console.log(a))
 
 // const yt = require("./main")
 

@@ -7,13 +7,14 @@ import GetAjaxURL from "../yt/get-ajax-url"
 import _default from "../default"
 import GetProcessingDownloadError from "../errors/download-media"
 
-
 export interface OptionsDownloadMedia {
   axios_config?: AxiosRequestConfig // Default Axios Config
   hosting?: String,
+  ajax?: any
 }
 export interface Params_DownloadMedia {
   link: String // Require
+  debugging?: Boolean // Debugging
   format: "480"|"720"|"1080"|"1440"|"4k"|"8k"|"mp3"|"ogg"|"wav"|"m4a"|"webm"|"aac"|"opus" // Require
   options?: OptionsDownloadMedia
 }
@@ -61,17 +62,23 @@ export interface API_VideoDownloadAPI {
   extended_duration?: Number|null|undefined
 }
 
-async function GetProcessingDownload(hosting: String, idWorker: string, axios_config?: AxiosRequestConfig): Promise<{ url: String }> {
+async function GetProcessingDownload(hosting: String, idWorker: string, axios_config?: AxiosRequestConfig, isDebug?: Boolean): Promise<{ url: String }> {
   if(!idWorker) {
     throw new GetProcessingDownloadError("Id Worker Not Found!", "ID_WORKER_NOT_FOUNDED")
   }
   const urlProgress = String(GetAjaxURL("download", String(hosting||""))+"?id="+idWorker)
+  if(isDebug) {
+    console.log("[Debugging GetProcessingDownload]: Get Ajax Progress:", urlProgress)
+  }
   const requestProgress = await RequestURL(urlProgress, axios_config)
+  if(isDebug) {
+    console.log("[Debugging GetProcessingDownload]: Progress API:", requestProgress.data)
+  }
   const dataResult: API_Progress_VideoDownloadAPI|any = requestProgress.data
   if(dataResult?.success != 1) {
     await new Promise((a) => setTimeout(a, 1500)) // Sleep on 1.5seconds
     return await GetProcessingDownload(
-      hosting, idWorker, axios_config
+      hosting, idWorker, axios_config, isDebug
     )
   }
   return {
@@ -79,10 +86,13 @@ async function GetProcessingDownload(hosting: String, idWorker: string, axios_co
   }
 }
 
-export default async function DownloadMedia({ link = "", format = "720", options = {} }: Params_DownloadMedia): Promise<{ card?: InfoContent_API_VideoDownloadAPI|any, url: String }> {
+export default async function DownloadMedia({ link = "", debugging, format = "720", options = {} }: Params_DownloadMedia): Promise<{ card?: InfoContent_API_VideoDownloadAPI|any, url: String }> {
   const validate = getYoutubeVideoID(String(link||""))
   const formatOpt = getDownloadFormat(format)
-
+  const isDebug = !!(typeof debugging === "boolean" && !!debugging)?true:false
+  if(isDebug) {
+    console.log("[Debugging DownloadMedia]: Checking Validation Youtube:", validate)
+  }
   if(!validate.isValid) {
     throw new GetInfoYoutubeContentError("Link YouTube is not valid!", "INVALID_URL")
   }
@@ -97,7 +107,11 @@ export default async function DownloadMedia({ link = "", format = "720", options
     add_info: "1",
     format: formatOpt.format
   }).toString()
-  const urlInfo = `${GetAjaxURL("info", loadHosting)}?${urlBuild}`
+  const urlInfo = !options?.ajax? `${GetAjaxURL("info", loadHosting)}?${urlBuild}`
+  :`${options?.ajax("info", loadHosting)}?${urlBuild}`
+  if(isDebug) {
+    console.log("[Debugging DownloadMedia]: Ajax URL Info:", urlInfo)
+  }
   // Get Id And Basic Information
   const getInfo = await RequestURL(urlInfo, (options.axios_config||{}))
   const dataWorker: API_VideoDownloadAPI|any = (getInfo.data||{})
@@ -117,7 +131,7 @@ export default async function DownloadMedia({ link = "", format = "720", options
       link: dataWorker.additional_info.channel?.link || dataWorker.additional_info.channel?.url,
     }
   }:null
-  const getDownloadProgress = await GetProcessingDownload(loadHosting, idWorker, (options.axios_config||{}))
+  const getDownloadProgress = await GetProcessingDownload(loadHosting, idWorker, (options.axios_config||{}), isDebug)
   const getURL = String(getDownloadProgress.url||"")
   return {
     card: cardInfo,
