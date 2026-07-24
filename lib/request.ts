@@ -1,5 +1,9 @@
 import { AxiosRequestConfig } from "axios"
 import axios from "axios"
+import https from "https"
+import http from "http"
+import { isIP } from "net"
+import _default from "./default"
 
 interface OptionRequest {
   url?: string
@@ -19,10 +23,28 @@ interface ResultHTTPRequest {
   data?: Object|String|null
 }
 
+function createAgent(url: string): https.Agent | http.Agent | undefined {
+  const parsedUrl = new URL(String(url||""))
+  const hostname = parsedUrl.hostname
+  const overrides = (_default.dns_override || {})[hostname]
+  if(!overrides || !overrides.length) return undefined
+  const ip = overrides[0]
+  const family = isIP(ip) || 4
+  const lookup: any = (hostname: string, options: any, callback: (err: NodeJS.ErrnoException | null, address: string, family: number) => void) => {
+    callback(null, ip, family)
+  }
+  if(parsedUrl.protocol === "https:") {
+    return new https.Agent({ lookup, keepAlive: true })
+  }
+  return new http.Agent({ lookup, keepAlive: true })
+}
+
 export async function RequestURL(url: string, options?: OptionRequest|AxiosRequestConfig): Promise<ResultHTTPRequest> {
   try {
-    const axiosdefault = {
+    const agent = createAgent(url)
+    const axiosdefault: any = {
       url: String(url||""),
+      ...(agent ? { httpsAgent: agent, httpAgent: agent } : {}),
       headers: {
         "accept": "*/*",
         "accept-language": "id,en-US;q=0.9,en;q=0.8,ms;q=0.7",
@@ -37,6 +59,9 @@ export async function RequestURL(url: string, options?: OptionRequest|AxiosReque
       },
       ...options,
     }
+    if(agent) {
+      delete axiosdefault.proxy
+    }
     const axiosrequest = await axios.request(axiosdefault)
     return {
       status: axiosrequest.status,
@@ -49,7 +74,7 @@ export async function RequestURL(url: string, options?: OptionRequest|AxiosReque
     if(response) {
       return {
         error: e.stack,
-        isError: false,
+        isError: true,
         status: response.status,
         statusText: response.statusText,
         headers: response.headers,

@@ -31,7 +31,7 @@ export default async function GetInfoYoutubeContent(url: string, axios_config?: 
   if(getRequest.isError) {
     throw new GetInfoYoutubeContentError(getRequest.error, "REQUEST_AXIOS_ERROR")
   }
-  const $ = cheerio.load(getRequest.data)
+  const $ = cheerio.load(String(getRequest.data || ""))
 
   let getScript: string[] = []
   $("body script").each((i, el) => {

@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  privoxy-tor:
+    image: lucasfragomeni/privoxy-tor:latest
+    container_name: proxy-outbound
+    ports:
+      - "8118:8118"   # Privoxy HTTP proxy
+      - "9050:9050"   # SOCKS5 via Tor
+    restart: unless-stopped
+    environment:
+      - TOR_PROXY_PORT=9050
+      - PRIVOXY_PORT=8118
+
+  # Optional: Squid proxy mandiri
+  squid:
+    build: ./squid-proxy
+    container_name: squid-proxy
+    ports:
+      - "3128:3128"
+    restart: unless-stopped

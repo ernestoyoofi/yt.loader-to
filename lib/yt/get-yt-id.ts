@@ -13,9 +13,7 @@ export default function getYoutubeVideoID(url: string) {
         videoId = pathSegments[1] || new URLSearchParams(parsedUrl.search).get("v")
         break;
       case "shorts":
-      case "short":
       case "embed":
-      case "short":
       case "live":
         videoId = pathSegments[1]
         break;

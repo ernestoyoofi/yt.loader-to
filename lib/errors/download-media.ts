@@ -4,7 +4,7 @@ export default class GetProcessingDownloadError extends Error {
 
   constructor(message: string, code?: string, detail?: any) {
     super(message)
-    this.name = 'GetInfoYoutubeContent'
+    this.name = 'GetProcessingDownloadError'
     Object.setPrototypeOf(this, GetProcessingDownloadError.prototype)
 
     this.code = code

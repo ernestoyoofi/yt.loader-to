@@ -1,5 +1,4 @@
 import { AxiosRequestConfig } from "axios"
-import GetInfoYoutubeContentError from "../errors/get-info"
 import getYoutubeVideoID from "../yt/get-yt-id"
 import { RequestURL } from "../request"
 import getDownloadFormat from "../yt/get-format"
@@ -62,28 +61,36 @@ export interface API_VideoDownloadAPI {
   extended_duration?: Number|null|undefined
 }
 
-async function GetProcessingDownload(hosting: String, idWorker: string, axios_config?: AxiosRequestConfig, isDebug?: Boolean): Promise<{ url: String }> {
+async function GetProcessingDownload(progressUrl: string, idWorker: string, axios_config?: AxiosRequestConfig, isDebug?: Boolean): Promise<{ url: String }> {
   if(!idWorker) {
     throw new GetProcessingDownloadError("Id Worker Not Found!", "ID_WORKER_NOT_FOUNDED")
   }
-  const urlProgress = String(GetAjaxURL("download", String(hosting||""))+"?id="+idWorker)
-  if(isDebug) {
-    console.log("[Debugging GetProcessingDownload]: Get Ajax Progress:", urlProgress)
+  const maxRetries = 120
+  for(let attempt = 0; attempt < maxRetries; attempt++) {
+    const urlProgress = progressUrl.includes("id=") ? progressUrl : (progressUrl.includes("?") ? progressUrl+"&id="+idWorker : progressUrl+"?id="+idWorker)
+    if(isDebug) {
+      console.log("[Debugging GetProcessingDownload]: Get Ajax Progress:", urlProgress)
+    }
+    const requestProgress = await RequestURL(urlProgress, axios_config)
+    if(requestProgress.isError) {
+      if(isDebug) {
+        console.log("[Debugging GetProcessingDownload]: Progress API Error:", requestProgress.error)
+      }
+      await new Promise((a) => setTimeout(a, 1500))
+      continue
+    }
+    if(isDebug) {
+      console.log("[Debugging GetProcessingDownload]: Progress API:", requestProgress.data)
+    }
+    const dataResult: API_Progress_VideoDownloadAPI|any = requestProgress.data
+    if(dataResult?.success == 1) {
+      return {
+        url: dataResult.download_url
+      }
+    }
+    await new Promise((a) => setTimeout(a, 1500))
   }
-  const requestProgress = await RequestURL(urlProgress, axios_config)
-  if(isDebug) {
-    console.log("[Debugging GetProcessingDownload]: Progress API:", requestProgress.data)
-  }
-  const dataResult: API_Progress_VideoDownloadAPI|any = requestProgress.data
-  if(dataResult?.success != 1) {
-    await new Promise((a) => setTimeout(a, 1500)) // Sleep on 1.5seconds
-    return await GetProcessingDownload(
-      hosting, idWorker, axios_config, isDebug
-    )
-  }
-  return {
-    url: dataResult.download_url
-  }
+  throw new GetProcessingDownloadError("Download processing timed out!", "DOWNLOAD_TIMEOUT")
 }
 
 export default async function DownloadMedia({ link = "", debugging, format = "720", options = {} }: Params_DownloadMedia): Promise<{ card?: InfoContent_API_VideoDownloadAPI|any, url: String }> {
@@ -94,10 +101,10 @@ export default async function DownloadMedia({ link = "", debugging, format = "72
     console.log("[Debugging DownloadMedia]: Checking Validation Youtube:", validate)
   }
   if(!validate.isValid) {
-    throw new GetInfoYoutubeContentError("Link YouTube is not valid!", "INVALID_URL")
+    throw new GetProcessingDownloadError("Link YouTube is not valid!", "INVALID_URL")
   }
   if(!formatOpt.format) {
-    throw new GetInfoYoutubeContentError("Format is not accepted!", "INVALID_FORMAT")
+    throw new GetProcessingDownloadError("Format is not accepted!", "INVALID_FORMAT")
   }
   const loadHosting = new URL(
     String(options.hosting||_default.hosting||"")
@@ -114,6 +121,9 @@ export default async function DownloadMedia({ link = "", debugging, format = "72
   }
   // Get Id And Basic Information
   const getInfo = await RequestURL(urlInfo, (options.axios_config||{}))
+  if(getInfo.isError) {
+    throw new GetProcessingDownloadError(getInfo.error, "REQUEST_INFO_FAILED")
+  }
   const dataWorker: API_VideoDownloadAPI|any = (getInfo.data||{})
   const idWorker = String(dataWorker.id||"")
   const cardInfo = dataWorker.additional_info? {
@@ -131,7 +141,8 @@ export default async function DownloadMedia({ link = "", debugging, format = "72
       link: dataWorker.additional_info.channel?.link || dataWorker.additional_info.channel?.url,
     }
   }:null
-  const getDownloadProgress = await GetProcessingDownload(loadHosting, idWorker, (options.axios_config||{}), isDebug)
+  const progressUrl = String(dataWorker.progress_url || "https://p.savenow.to/api/progress?id=" + idWorker)
+  const getDownloadProgress = await GetProcessingDownload(progressUrl, idWorker, (options.axios_config||{}), isDebug)
   const getURL = String(getDownloadProgress.url||"")
   return {
     card: cardInfo,
