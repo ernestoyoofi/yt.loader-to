@@ -1,7 +1,7 @@
 {
   "name": "@ernestoyoofi/yt.loader-to",
   "description": "An unofficial, promise-based API wrapper for `loader.to` to fetch YouTube video information and generate download links. Written in TypeScript, it's fully typed and easy to use in any Node.js project.",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "main": "./dist/lib/main.js",
   "types": "./dist/lib/main.d.ts",
   "exports": {

@@ -1,0 +1,40 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - run: npm install
+      - run: npm run build
+
+      - name: Package tarball
+        run: tar -czf yt.loader-to-nightly.tar.gz -C dist .
+
+      - name: Delete previous nightly release
+        run: gh release delete nightly --yes --cleanup-tag || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create nightly release
+        run: |
+          gh release create nightly \
+            --title "Nightly $(date -u +%Y-%m-%d)" \
+            --notes "Automated nightly build from main branch." \
+            --prerelease \
+            yt.loader-to-nightly.tar.gz
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

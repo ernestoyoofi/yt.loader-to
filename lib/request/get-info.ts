@@ -49,13 +49,18 @@ export default async function GetInfoYoutubeContent(url: string, axios_config?: 
   const dataJs = getScriptInit.slice(20, getScriptInit.length - 1)
   const dataJson = JSON.parse(dataJs)
   const contents = dataJson.contents.twoColumnWatchNextResults.results.results.contents
-  const videoContent = contents[0].videoPrimaryInfoRenderer
-  const ownerContent = contents[1].videoSecondaryInfoRenderer
+
+  const videoContent = contents.find((c: any) => c.videoPrimaryInfoRenderer)?.videoPrimaryInfoRenderer
+  const ownerContent = contents.find((c: any) => c.videoSecondaryInfoRenderer)?.videoSecondaryInfoRenderer
+
+  if(!videoContent || !ownerContent) {
+    throw new GetInfoYoutubeContentError("Failed to extract video info from YouTube data!", "EXTRACTION_DATA_YOUTUBE")
+  }
 
   return {
     image: `https://i.ytimg.com/vi/${validate.id}/hqdefault.jpg`,
-    title: videoContent.title.runs[0].text,
-    description: ownerContent.attributedDescription.content,
+    title: videoContent.title?.runs?.[0]?.text || "Unknown Title",
+    description: ownerContent.attributedDescription?.content || "",
     // view: Number(
     //   String(videoContent.viewCount.videoViewCountRenderer.viewCount.simpleText).replace(/\D/g, "")
     // ),
@@ -65,9 +70,9 @@ export default async function GetInfoYoutubeContent(url: string, axios_config?: 
     id: String(validate.id||""),
     yt_url: `https://youtu.be/${validate.id}?feature=share`,
     channel: {
-      pp: ownerContent.owner.videoOwnerRenderer.thumbnail.thumbnails[0].url,
-      name: ownerContent.owner.videoOwnerRenderer.title.runs[0].text,
-      url_ch: `https://youtube.com${ownerContent.owner.videoOwnerRenderer.title.runs[0].navigationEndpoint.commandMetadata.webCommandMetadata.url}`
+      pp: ownerContent.owner?.videoOwnerRenderer?.thumbnail?.thumbnails?.[0]?.url || "",
+      name: ownerContent.owner?.videoOwnerRenderer?.title?.runs?.[0]?.text || "Unknown Channel",
+      url_ch: `https://youtube.com${ownerContent.owner?.videoOwnerRenderer?.title?.runs?.[0]?.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url || ""}`
     }
   }
 }
